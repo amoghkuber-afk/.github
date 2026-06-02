@@ -1,7 +1,7 @@
 
 import streamlit as st
 import pandas as pd
-import nu```python id="m8s1ke"
+import nu python id="m8s1ke"
 import streamlit as st
 import pandas as pd
 import numpy as np
