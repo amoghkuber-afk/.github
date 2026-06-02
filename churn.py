@@ -1,444 +1,220 @@
 
 import streamlit as st
 import pandas as pd
-import nu python id="m8s1ke"
-import streamlit as st
-import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score
+import plotly.express as px
+import plotly.graph_objects as go
 
-# ---------------------------------------------------
+# ------------------------------------------------
 # PAGE CONFIG
-# ---------------------------------------------------
+# ------------------------------------------------
 
 st.set_page_config(
-    page_title="Telecom Churn Prediction",
+    page_title="Telecom Churn Dashboard",
     layout="wide"
 )
 
-# ---------------------------------------------------
+# ------------------------------------------------
+# CUSTOM CSS
+# ------------------------------------------------
+
+st.markdown("""
+<style>
+
+.main {
+    background-color: #0b1220;
+    color: white;
+}
+
+h1, h2, h3, h4 {
+    color: white;
+}
+
+[data-testid="stMetric"] {
+    background-color: #111827;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #1f2937;
+}
+
+.sidebar .sidebar-content {
+    background-color: #111827;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+# ------------------------------------------------
 # TITLE
-# ---------------------------------------------------
+# ------------------------------------------------
 
-st.title("📊 Telecom Churn Prediction Dashboard")
-st.write("Machine Learning Based Customer Churn Prediction System")
+st.title("📊 TELECOM CHURN PREDICTION DASHBOARD")
 
-# ---------------------------------------------------
-# LOAD DATASET
-# ---------------------------------------------------
+st.markdown("### Customer Churn Analysis and Prediction")
 
-@st.cache_data
-def load_data():
-    df = pd.read_csv("telecom_churn.csv")
-    return df
+# ------------------------------------------------
+# SAMPLE DATA
+# ------------------------------------------------
 
-df = load_data()
+np.random.seed(42)
 
-# ---------------------------------------------------
-# SHOW DATASET
-# ---------------------------------------------------
+df = pd.DataFrame({
+    "tenure": np.random.randint(1, 72, 500),
+    "MonthlyCharges": np.random.randint(20, 120, 500),
+    "Contract": np.random.choice(
+        ["Month-to-month", "One year", "Two year"], 500),
+    "InternetService": np.random.choice(
+        ["Fiber optic", "DSL", "No internet"], 500),
+    "PaymentMethod": np.random.choice(
+        ["Electronic check", "Mailed check",
+         "Bank transfer", "Credit card"], 500),
+    "Churn": np.random.choice(["Yes", "No"], 500)
+})
 
-st.subheader("Dataset Preview")
-st.dataframe(df.head())
+# ------------------------------------------------
+# METRICS
+# ------------------------------------------------
 
-# ---------------------------------------------------
-# DATA CLEANING
-# ---------------------------------------------------
+total_customers = len(df)
+churned = len(df[df["Churn"] == "Yes"])
+retained = len(df[df["Churn"] == "No"])
+churn_rate = round((churned / total_customers) * 100, 2)
 
-# Remove spaces from column names
-df.columns = df.columns.str.strip()
+col1, col2, col3, col4 = st.columns(4)
 
-# Remove customerID column if exists
-if "customerID" in df.columns:
-    df.drop("customerID", axis=1, inplace=True)
-
-# Convert TotalCharges column to numeric
-if "TotalCharges" in df.columns:
-    df["TotalCharges"] = pd.to_numeric(
-        df["TotalCharges"],
-        errors="coerce"
-    )
-
-# Remove missing values
-df.dropna(inplace=True)
-
-# ---------------------------------------------------
-# ENCODE CATEGORICAL COLUMNS
-# ---------------------------------------------------
-
-label_encoders = {}
-
-for column in df.columns:
-
-    if df[column].dtype == "object":
-
-        le = LabelEncoder()
-
-        df[column] = le.fit_transform(df[column])
-
-        label_encoders[column] = le
-
-# ---------------------------------------------------
-# FEATURES AND TARGET
-# ---------------------------------------------------
-
-X = df.drop("Churn", axis=1)
-y = df["Churn"]
-
-# ---------------------------------------------------
-# SPLIT DATA
-# ---------------------------------------------------
-
-X_train, X_test, y_train, y_test = train_test_split(
-    X,
-    y,
-    test_size=0.2,
-    random_state=42
-)
-
-# ---------------------------------------------------
-# TRAIN MODEL
-# ---------------------------------------------------
-
-model = RandomForestClassifier(
-    n_estimators=100,
-    random_state=42
-)
-
-model.fit(X_train, y_train)
-
-# ---------------------------------------------------
-# MODEL ACCURACY
-# ---------------------------------------------------
-
-y_pred = model.predict(X_test)
-
-accuracy = accuracy_score(y_test, y_pred)
-
-st.subheader("Model Accuracy")
-
-st.success(f"Accuracy: {accuracy * 100:.2f}%")
-
-# ---------------------------------------------------
-# SIMPLE CHARTS
-# ---------------------------------------------------
-
-st.subheader("Dataset Information")
-
-st.write("Shape of Dataset:", df.shape)
-
-st.write("Columns in Dataset:")
-st.write(df.columns.tolist())
-
-# ---------------------------------------------------
-# CHURN DISTRIBUTION
-# ---------------------------------------------------
-
-st.subheader("Churn Distribution")
-
-churn_count = df["Churn"].value_counts()
-
-st.bar_chart(churn_count)
-
-# ---------------------------------------------------
-# CUSTOMER PREDICTION SECTION
-# ---------------------------------------------------
-
-st.subheader("Predict Customer Churn")
-
-input_data = {}
-
-for column in X.columns:
-
-    value = st.number_input(
-        f"Enter {column}",
-        value=float(X[column].mean())
-    )
-
-    input_data[column] = value
-
-# ---------------------------------------------------
-# PREDICTION BUTTON
-# ---------------------------------------------------
-
-if st.button("Predict"):
-
-    input_df = pd.DataFrame([input_data])
-
-    prediction = model.predict(input_df)
-
-    if prediction[0] == 1:
-
-        st.error("⚠️ Customer is likely to Churn")
-
-    else:
-
-        st.success("✅ Customer is likely to Stay")
-
-# ---------------------------------------------------
-# FOOTER
-# ---------------------------------------------------
+col1.metric("Total Customers", total_customers)
+col2.metric("Churned Customers", churned)
+col3.metric("Retained Customers", retained)
+col4.metric("Churn Rate", f"{churn_rate}%")
 
 st.markdown("---")
-st.markdown("Developed using Streamlit and Machine Learning")
-```
-mpy as np
-import plotly.express as px
 
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import classification_report
+# ------------------------------------------------
+# CHARTS
+# ------------------------------------------------
 
-# ---------------------------------------------------
-# PAGE CONFIGURATION
-# ---------------------------------------------------
+c1, c2 = st.columns(2)
 
-st.set_page_config(
-    page_title="Telecom Churn Prediction",
-    layout="wide"
-)
+# Churn Distribution Pie Chart
+with c1:
+    churn_counts = df["Churn"].value_counts()
 
-# ---------------------------------------------------
-# TITLE
-# ---------------------------------------------------
-
-st.title("📊 Telecom Churn Prediction Dashboard")
-st.write("Machine Learning Based Customer Churn Prediction System")
-
-# ---------------------------------------------------
-# LOAD DATASET
-# ---------------------------------------------------
-
-@st.cache_data
-def load_data():
-    data = pd.read_csv("telecom_churn.csv")
-    return data
-
-df = load_data()
-
-# ---------------------------------------------------
-# SHOW DATASET
-# ---------------------------------------------------
-
-st.subheader("Dataset Preview")
-
-st.dataframe(df.head())
-
-# ---------------------------------------------------
-# DATA CLEANING
-# ---------------------------------------------------
-
-# Remove extra spaces from column names
-df.columns = df.columns.str.strip()
-
-# Remove customerID column if available
-if "customerID" in df.columns:
-    df.drop("customerID", axis=1, inplace=True)
-
-# Convert TotalCharges to numeric
-if "TotalCharges" in df.columns:
-    df["TotalCharges"] = pd.to_numeric(
-        df["TotalCharges"],
-        errors="coerce"
+    fig = px.pie(
+        values=churn_counts.values,
+        names=churn_counts.index,
+        title="Churn Distribution",
+        hole=0.5
     )
 
-# Remove missing values
-df.dropna(inplace=True)
+    st.plotly_chart(fig, use_container_width=True)
 
-# ---------------------------------------------------
-# LABEL ENCODING
-# ---------------------------------------------------
-
-label_encoders = {}
-
-for column in df.columns:
-
-    if df[column].dtype == "object":
-
-        le = LabelEncoder()
-
-        df[column] = le.fit_transform(df[column])
-
-        label_encoders[column] = le
-
-# ---------------------------------------------------
-# EXPLORATORY DATA ANALYSIS
-# ---------------------------------------------------
-
-st.subheader("📈 Exploratory Data Analysis")
-
-col1, col2 = st.columns(2)
-
-# Tenure Distribution
-with col1:
-
-    if "tenure" in df.columns:
-
-        fig1 = px.histogram(
-            df,
-            x="tenure",
-            title="Customer Tenure Distribution"
-        )
-
-        st.plotly_chart(fig1)
-
-# Monthly Charges Distribution
-with col2:
-
-    if "MonthlyCharges" in df.columns:
-
-        fig2 = px.histogram(
-            df,
-            x="MonthlyCharges",
-            title="Monthly Charges Distribution"
-        )
-
-        st.plotly_chart(fig2)
-
-# Churn Distribution
-if "Churn" in df.columns:
-
-    fig3 = px.pie(
+# Contract Type Chart
+with c2:
+    contract_fig = px.histogram(
         df,
-        names="Churn",
-        title="Churn Distribution"
+        x="Contract",
+        color="Churn",
+        barmode="group",
+        title="Churn by Contract Type"
     )
 
-    st.plotly_chart(fig3)
+    st.plotly_chart(contract_fig, use_container_width=True)
 
-# ---------------------------------------------------
-# FEATURES AND TARGET
-# ---------------------------------------------------
+# ------------------------------------------------
+# SECOND ROW
+# ------------------------------------------------
 
-X = df.drop("Churn", axis=1)
+c3, c4 = st.columns(2)
 
-y = df["Churn"]
+# Internet Service
+with c3:
+    internet_fig = px.histogram(
+        df,
+        x="InternetService",
+        color="Churn",
+        barmode="group",
+        title="Churn by Internet Service"
+    )
 
-# ---------------------------------------------------
-# TRAIN TEST SPLIT
-# ---------------------------------------------------
+    st.plotly_chart(internet_fig, use_container_width=True)
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X,
-    y,
-    test_size=0.2,
-    random_state=42
+# Monthly Charges
+with c4:
+    charge_fig = px.scatter(
+        df,
+        x="tenure",
+        y="MonthlyCharges",
+        color="Churn",
+        title="Monthly Charges vs Tenure"
+    )
+
+    st.plotly_chart(charge_fig, use_container_width=True)
+
+# ------------------------------------------------
+# SIDEBAR
+# ------------------------------------------------
+
+st.sidebar.title("Customer Details")
+
+gender = st.sidebar.selectbox(
+    "Gender",
+    ["Male", "Female"]
 )
 
-# ---------------------------------------------------
-# MODEL TRAINING
-# ---------------------------------------------------
-
-model = RandomForestClassifier(
-    n_estimators=100,
-    random_state=42
+senior = st.sidebar.selectbox(
+    "Senior Citizen",
+    ["Yes", "No"]
 )
 
-model.fit(X_train, y_train)
+tenure = st.sidebar.slider(
+    "Tenure",
+    1, 72, 24
+)
 
-# ---------------------------------------------------
-# MODEL PREDICTION
-# ---------------------------------------------------
+monthly = st.sidebar.slider(
+    "Monthly Charges",
+    20, 120, 70
+)
 
-y_pred = model.predict(X_test)
+contract = st.sidebar.selectbox(
+    "Contract Type",
+    ["Month-to-month", "One year", "Two year"]
+)
 
-accuracy = accuracy_score(y_test, y_pred)
+payment = st.sidebar.selectbox(
+    "Payment Method",
+    ["Electronic check",
+     "Mailed check",
+     "Bank transfer",
+     "Credit card"]
+)
 
-# ---------------------------------------------------
-# MODEL PERFORMANCE
-# ---------------------------------------------------
-
-st.subheader("🤖 Model Performance")
-
-st.success(f"Model Accuracy: {accuracy * 100:.2f}%")
-
-# Confusion Matrix
-st.write("### Confusion Matrix")
-
-cm = confusion_matrix(y_test, y_pred)
-
-st.write(cm)
-
-# Classification Report
-st.write("### Classification Report")
-
-report = classification_report(y_test, y_pred)
-
-st.text(report)
-
-# ---------------------------------------------------
-# CUSTOMER CHURN PREDICTION
-# ---------------------------------------------------
-
-st.subheader("🔍 Predict Customer Churn")
-
-input_data = {}
-
-for column in X.columns:
-
-    # Numerical Columns
-    if X[column].dtype == "int64" or X[column].dtype == "float64":
-
-        value = st.number_input(
-            f"Enter {column}",
-            value=float(X[column].mean())
-        )
-
-        input_data[column] = value
-
-    # Categorical Columns
-    else:
-
-        options = label_encoders[column].classes_
-
-        selected_value = st.selectbox(
-            f"Select {column}",
-            options
-        )
-
-        encoded_value = label_encoders[column].transform(
-            [selected_value]
-        )[0]
-
-        input_data[column] = encoded_value
-
-# ---------------------------------------------------
+# ------------------------------------------------
 # PREDICTION BUTTON
-# ---------------------------------------------------
+# ------------------------------------------------
 
-if st.button("Predict Churn"):
+if st.sidebar.button("Predict Churn"):
 
-    input_df = pd.DataFrame([input_data])
-
-    prediction = model.predict(input_df)
-
-    prediction_probability = model.predict_proba(input_df)
-
-    if prediction[0] == 1:
-
-        st.error("⚠️ Customer is likely to Churn")
-
+    if monthly > 80 and contract == "Month-to-month":
+        prediction = "YES"
+        color = "red"
     else:
+        prediction = "NO"
+        color = "green"
 
-        st.success("✅ Customer is likely to Stay")
+    st.sidebar.markdown(f"""
+    <h2 style='color:{color};'>
+    Churn Prediction: {prediction}
+    </h2>
+    """, unsafe_allow_html=True)
 
-    confidence = np.max(prediction_probability) * 100
-
-    st.info(f"Prediction Confidence: {confidence:.2f}%")
-
-# ---------------------------------------------------
+# ------------------------------------------------
 # FOOTER
-# ---------------------------------------------------
+# ------------------------------------------------
 
 st.markdown("---")
 
 st.markdown(
-    "Developed using Streamlit and Machine Learning"
+    "### Telecom Churn Prediction System | Machine Learning Project"
 )
 
