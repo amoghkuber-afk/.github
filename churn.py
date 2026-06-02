@@ -1,4 +1,4 @@
-```python id="q7rm4a"
+```python
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -7,10 +7,12 @@ import plotly.express as px
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import classification_report
 
 # ---------------------------------------------------
-# PAGE CONFIG
+# PAGE CONFIGURATION
 # ---------------------------------------------------
 
 st.set_page_config(
@@ -26,96 +28,113 @@ st.title("📊 Telecom Churn Prediction Dashboard")
 st.write("Machine Learning Based Customer Churn Prediction System")
 
 # ---------------------------------------------------
-# LOAD DATA
+# LOAD DATASET
 # ---------------------------------------------------
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv("telecom_churn.csv")
-    return df
+    data = pd.read_csv("telecom_churn.csv")
+    return data
 
 df = load_data()
 
 # ---------------------------------------------------
-# DATA PREVIEW
+# SHOW DATASET
 # ---------------------------------------------------
 
 st.subheader("Dataset Preview")
+
 st.dataframe(df.head())
 
 # ---------------------------------------------------
 # DATA CLEANING
 # ---------------------------------------------------
 
-# Remove spaces from column names
+# Remove extra spaces from column names
 df.columns = df.columns.str.strip()
 
-# Remove customerID column if present
-if 'customerID' in df.columns:
-    df.drop('customerID', axis=1, inplace=True)
+# Remove customerID column if available
+if "customerID" in df.columns:
+    df.drop("customerID", axis=1, inplace=True)
 
-# Convert TotalCharges to numeric if present
-if 'TotalCharges' in df.columns:
-    df['TotalCharges'] = pd.to_numeric(
-        df['TotalCharges'],
-        errors='coerce'
+# Convert TotalCharges to numeric
+if "TotalCharges" in df.columns:
+    df["TotalCharges"] = pd.to_numeric(
+        df["TotalCharges"],
+        errors="coerce"
     )
 
-# Handle missing values
+# Remove missing values
 df.dropna(inplace=True)
 
 # ---------------------------------------------------
-# ENCODING
+# LABEL ENCODING
 # ---------------------------------------------------
 
 label_encoders = {}
 
 for column in df.columns:
-    if df[column].dtype == 'object':
+
+    if df[column].dtype == "object":
+
         le = LabelEncoder()
+
         df[column] = le.fit_transform(df[column])
+
         label_encoders[column] = le
 
 # ---------------------------------------------------
-# EDA
+# EXPLORATORY DATA ANALYSIS
 # ---------------------------------------------------
 
 st.subheader("📈 Exploratory Data Analysis")
 
 col1, col2 = st.columns(2)
 
+# Tenure Distribution
 with col1:
-    if 'tenure' in df.columns:
+
+    if "tenure" in df.columns:
+
         fig1 = px.histogram(
             df,
-            x='tenure',
-            title='Customer Tenure Distribution'
+            x="tenure",
+            title="Customer Tenure Distribution"
         )
+
         st.plotly_chart(fig1)
 
+# Monthly Charges Distribution
 with col2:
-    if 'MonthlyCharges' in df.columns:
+
+    if "MonthlyCharges" in df.columns:
+
         fig2 = px.histogram(
             df,
-            x='MonthlyCharges',
-            title='Monthly Charges Distribution'
+            x="MonthlyCharges",
+            title="Monthly Charges Distribution"
         )
+
         st.plotly_chart(fig2)
 
-if 'Churn' in df.columns:
+# Churn Distribution
+if "Churn" in df.columns:
+
     fig3 = px.pie(
         df,
-        names='Churn',
-        title='Churn Distribution'
+        names="Churn",
+        title="Churn Distribution"
     )
+
     st.plotly_chart(fig3)
 
 # ---------------------------------------------------
-# FEATURE SELECTION
+# FEATURES AND TARGET
 # ---------------------------------------------------
 
-X = df.drop('Churn', axis=1)
-y = df['Churn']
+X = df.drop("Churn", axis=1)
+
+y = df["Churn"]
 
 # ---------------------------------------------------
 # TRAIN TEST SPLIT
@@ -140,12 +159,16 @@ model = RandomForestClassifier(
 model.fit(X_train, y_train)
 
 # ---------------------------------------------------
-# MODEL EVALUATION
+# MODEL PREDICTION
 # ---------------------------------------------------
 
 y_pred = model.predict(X_test)
 
 accuracy = accuracy_score(y_test, y_pred)
+
+# ---------------------------------------------------
+# MODEL PERFORMANCE
+# ---------------------------------------------------
 
 st.subheader("🤖 Model Performance")
 
@@ -153,15 +176,20 @@ st.success(f"Model Accuracy: {accuracy * 100:.2f}%")
 
 # Confusion Matrix
 st.write("### Confusion Matrix")
+
 cm = confusion_matrix(y_test, y_pred)
+
 st.write(cm)
 
 # Classification Report
 st.write("### Classification Report")
-st.text(classification_report(y_test, y_pred))
+
+report = classification_report(y_test, y_pred)
+
+st.text(report)
 
 # ---------------------------------------------------
-# PREDICTION SECTION
+# CUSTOMER CHURN PREDICTION
 # ---------------------------------------------------
 
 st.subheader("🔍 Predict Customer Churn")
@@ -170,8 +198,8 @@ input_data = {}
 
 for column in X.columns:
 
-    # Numerical columns
-    if X[column].dtype in ['int64', 'float64']:
+    # Numerical Columns
+    if X[column].dtype == "int64" or X[column].dtype == "float64":
 
         value = st.number_input(
             f"Enter {column}",
@@ -180,17 +208,19 @@ for column in X.columns:
 
         input_data[column] = value
 
-    # Categorical columns
+    # Categorical Columns
     else:
 
         options = label_encoders[column].classes_
 
-        value = st.selectbox(
+        selected_value = st.selectbox(
             f"Select {column}",
             options
         )
 
-        encoded_value = label_encoders[column].transform([value])[0]
+        encoded_value = label_encoders[column].transform(
+            [selected_value]
+        )[0]
 
         input_data[column] = encoded_value
 
@@ -204,7 +234,7 @@ if st.button("Predict Churn"):
 
     prediction = model.predict(input_df)
 
-    prediction_proba = model.predict_proba(input_df)
+    prediction_probability = model.predict_proba(input_df)
 
     if prediction[0] == 1:
 
@@ -214,17 +244,17 @@ if st.button("Predict Churn"):
 
         st.success("✅ Customer is likely to Stay")
 
-    st.write(
-        f"Prediction Confidence: "
-        f"{np.max(prediction_proba) * 100:.2f}%"
-    )
+    confidence = np.max(prediction_probability) * 100
+
+    st.info(f"Prediction Confidence: {confidence:.2f}%")
 
 # ---------------------------------------------------
 # FOOTER
 # ---------------------------------------------------
 
 st.markdown("---")
+
 st.markdown(
-    "Developed using Streamlit, Scikit-learn, and Machine Learning"
+    "Developed using Streamlit and Machine Learning"
 )
 ```
